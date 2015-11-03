@@ -1,4 +1,3 @@
-![Ignite 2015技术大会]()
 <img src="http://www.msignitechina.com/Images/logo/barcode.jpg" alt="微信二维码" title="微信二维码" width="150" />
 ## README
 用于Ignite大会中DIM-B202 软件定义计算演讲演示部分脚本
