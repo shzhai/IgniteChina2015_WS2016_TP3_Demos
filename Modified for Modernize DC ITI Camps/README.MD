@@ -1,6 +1,6 @@
 # Modified for Modernize DC ITI Camps and update for WS2016 TP4
 If you find anything wrong with it please feel free to shoot a email to: 
-[Me](shawnzhai@msn.com)
+[Me](mailto://shawnzhai@msn.com)
 
 # Resources
 [Download Windows Server 2016 Technical Preview 4](http://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-technical-preview)
