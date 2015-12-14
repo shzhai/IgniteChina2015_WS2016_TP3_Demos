@@ -47,13 +47,14 @@
 
 # 初始化演示环境设置设置Nano映像路径，构建BaseVHD路径以及Nano VHD路径
 Set-Location $env:USERPROFILE\Work\ignite2016
-$NanoVMName = 'Nano'
-
-
-$BasePath = New-Item -ItemType Directory .\Nano -Force | Select-Object -ExpandProperty FullName 
+$Suffix = 'NanoVM-'+ (Get-Random -Maximum 10)
+$NanoVMName = $Suffix + '-' + (Get-Date -UFormat %y%m%d)
+$BasePath = New-Item -ItemType Directory $NanoVMName -Force | Select-Object -ExpandProperty FullName 
 $ImagePath = 'C:\Users\Public\Documents\Hyper-V\Virtual hard disks\WindowsServerTP4.iso'
+
 if (!(Get-DiskImage -ImagePath $ImagePath | Get-Volume)){ Mount-DiskImage -ImagePath $ImagePath -StorageType ISO -PassThru }
 $MediaPath = "$((Get-DiskImage -ImagePath $ImagePath | Get-Volume).DriveLetter)" + ":\"
+$MediaDrive = $MediaPath.Split('\')[0]
 $NanoVHD = "C:\Users\Public\Documents\Hyper-V\Virtual hard disks"+"\"+"$NanoVMName.vhdx"
 
 if ($CurrentVM = Get-VM -Name $NanoVMName -ErrorAction SilentlyContinue) {
@@ -62,16 +63,18 @@ if ($CurrentVM = Get-VM -Name $NanoVMName -ErrorAction SilentlyContinue) {
     }
     Remove-VM -VM $CurrentVM -Force -Verbose
 } 
+
 Remove-Item -Path $NanoVHD  -Recurse -Force -ErrorAction SilentlyContinue
 
 
+
 # 准备打包Nano VHD的脚本及运行环境
-Copy-Item $MediaPath\NanoServer\*.ps* .\ -Force
+Copy-Item $MediaDrive\NanoServer\*.ps* .\ -Force
 Import-Module .\NanoServerImageGenerator.psm1 -Verbose
 
 # 创建Nano VHD，后期可以客户化（无人值守应答，加入域或静态IP设置等），演示中用到了最简单设置
 New-NanoServerImage -MediaPath $MediaPath -BasePath $BasePath -TargetPath $NanoVHD `
--GuestDrivers -ReverseForwarders  -Language 'en-us' `
+-ComputerName $NanoVMName -GuestDrivers -ReverseForwarders  -Language 'en-us' `
 -AdministratorPassword ("ignite2016" | ConvertTo-SecureString -AsPlainText -Force) 
 
 # 创建Nano虚拟机
