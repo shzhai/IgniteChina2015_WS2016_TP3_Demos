@@ -14,7 +14,7 @@
 
 * QQ: 8210498
 * weibo: [@翟老猫](http://weibo.com/u/1978082332)
-* email: [shawnzhai](shawnzhai@msn.com)
+* email: [shawnzhai](mailto://shawnzhai@msn.com)
 
 
 ##会议资源
