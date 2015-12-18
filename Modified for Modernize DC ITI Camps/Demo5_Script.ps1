@@ -49,7 +49,7 @@
 Set-Location $env:USERPROFILE\Work\ignite2016
 $Suffix = 'NanoVM-'+ (Get-Random -Maximum 10)
 $NanoVMName = $Suffix + '-' + (Get-Date -UFormat %y%m%d)
-$BasePath = New-Item -ItemType Directory $NanoVMName -Force | Select-Object -ExpandProperty FullName 
+$BasePath = New-Item -ItemType Directory $NanoVMName -Force | Select-Object -ExpandProperty FullName
 $ImagePath = 'C:\Users\Public\Documents\Hyper-V\Virtual hard disks\WindowsServerTP4.iso'
 
 if (!(Get-DiskImage -ImagePath $ImagePath | Get-Volume)){ Mount-DiskImage -ImagePath $ImagePath -StorageType ISO -PassThru }
@@ -67,15 +67,14 @@ if ($CurrentVM = Get-VM -Name $NanoVMName -ErrorAction SilentlyContinue) {
 Remove-Item -Path $NanoVHD  -Recurse -Force -ErrorAction SilentlyContinue
 
 
-
 # 准备打包Nano VHD的脚本及运行环境
 Copy-Item $MediaDrive\NanoServer\*.ps* .\ -Force
-Import-Module .\NanoServerImageGenerator.psm1 -Verbose
+# Import-Module .\NanoServerImageGenerator.psm1 -Verbose
+$TargetPath = $NanoVHD.Replace(" ","' '")
+$ScriptBlock = "New-NanoServerImage -MediaPath $MediaPath -BasePath $BasePath -TargetPath $TargetPath -ComputerName $NanoVMName -GuestDrivers -ReverseForwarders  -Language 'en-us' -AdministratorPassword (ConvertTo-SecureString -String 'ignite2016' -Asplaintext -Force)"
 
 # 创建Nano VHD，后期可以客户化（无人值守应答，加入域或静态IP设置等），演示中用到了最简单设置
-New-NanoServerImage -MediaPath $MediaPath -BasePath $BasePath -TargetPath $NanoVHD `
--ComputerName $NanoVMName -GuestDrivers -ReverseForwarders  -Language 'en-us' `
--AdministratorPassword ("ignite2016" | ConvertTo-SecureString -AsPlainText -Force) 
+Start-Process powershell.exe -Verb runas -ArgumentList "Import-Module .\NanoServerImageGenerator.psm1;$ScriptBlock"
 
 # 创建Nano虚拟机
 $vSwitchName = (Get-VMSwitch).Name
@@ -90,3 +89,17 @@ $NanoVMIP = $NanoVM.NetworkAdapters.IPAddresses[0]
 Set-Item WSMan:\localhost\Client\TrustedHosts -Value $NanoVMIP -Force -Concatenate  
 $ns = New-PSSession -ComputerName $NanoVMIP -Credential $Nanocred
 Copy-Item -ToSession $ns -Path .\aspnetv5web -Destination c:\ -Recurse -Force
+Enter-PSSession -Session $ns
+
+if (!(Get-NetFirewallRule | where {$_.Name -eq "TCP8080"})) {
+    New-NetFirewallRule -Name "TCP8080" -DisplayName "HTTP on TCP/8080" -Protocol tcp -LocalPort 8080 -Action Allow -Enabled True
+}
+
+# •NetSh Advfirewall set allprofiles state off
+
+# 清除演示环境
+$NanoVM | Stop-VM -TurnOff -Force 
+$NanoVM | Remove-VM -Force
+if (Test-Path $NanoVHD){Remove-Item -Path $NanoVHD  -Recurse -Force -ErrorAction SilentlyContinue}
+if (Test-Path $BasePath){Remove-Item -Path $BasePath -Recurse -Force -ErrorAction SilentlyContinue}
+if (Test-Path $MediaPath){Dismount-DiskImage -ImagePath $ImagePath}
