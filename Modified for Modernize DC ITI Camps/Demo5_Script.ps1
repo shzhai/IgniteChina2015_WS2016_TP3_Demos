@@ -109,7 +109,7 @@ Start-Process  .\aspnetv5web\approot\web.cmd
 
 Exit-PSSession 
 
-$NanoURI = $NanoVMIP + ":8080"
+$NanoURI = "$($NanoVMIP):8080"
 curl -Uri $NanoURI
 
 # 清除演示环境
