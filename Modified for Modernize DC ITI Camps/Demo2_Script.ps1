@@ -18,14 +18,22 @@ $baseimg = (Get-ContainerImage)[0]
 foreach ($i in 1..2) { New-Container -Name IginiteDemoContainer-$i -ContainerImage $baseimg -Verbose -Confirm:$false | Start-Container }
 $containers = Get-Container | Sort-Object 
 
-# 连接第一个容器进行破坏性操作
-Enter-PSSession -ContainerId $containers[0].ContainerId -RunAsAdministrator
+# 查看本地安全子系统进程, 包括本地WS2016虚拟机进程以及两个容器的进程，记录并对比PID进程号
+tasklist | findstr 'lsass'
 
+# 连接第一个容器
+Enter-PSSession -ContainerId $containers[0].ContainerId -RunAsAdministrator
+# 对比并发现只能看到当前容器的进程及PID
+tasklist | findstr 'lsass'
+
+
+<# 如果愿意可以对本地进行破坏性操作如删除相应注册表，并发现无法使用系统工具
 .\systeminfo.exe
 .\reg.exe DELETE HKLM\Software /f
 .\systeminfo.exe
 .\help.exe
 .\reg.exe
+#>
 
 # 连接本机，连接另一个容器检查
 Exit-PSSession
