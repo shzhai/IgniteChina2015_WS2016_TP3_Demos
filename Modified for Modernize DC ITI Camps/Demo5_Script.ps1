@@ -83,19 +83,34 @@ New-VM -Name $NanoVMName -MemoryStartupBytes 1GB -Generation 2 -VHDPath $NanoVHD
 
 
 # 扩展项目
-$Nanocred = Get-Credential
+$NanoPWD = "ignite2016" | ConvertTo-SecureString -AsPlainText -Force
+$Nanocred = new-object System.Management.Automation.PSCredential ("administrator",$NanoPWD)
 $NanoVM = Get-VM -Name $NanoVMName
 $NanoVMIP = $NanoVM.NetworkAdapters.IPAddresses[0]
 Set-Item WSMan:\localhost\Client\TrustedHosts -Value $NanoVMIP -Force -Concatenate  
 $ns = New-PSSession -ComputerName $NanoVMIP -Credential $Nanocred
 Copy-Item -ToSession $ns -Path .\aspnetv5web -Destination c:\ -Recurse -Force
+# 将本地编译打包好的ASP.NET 5 项目拷贝到Nano服务器并解包
+# Copy-Item -ToSession $ns -Path .\aspnetv5web.zip -Destination c:\ -Force
+# $ArchModule = Join-Path (($env:PSMODULEPATH).Split(';') -match 'system32') -ChildPath "Microsoft.PowerShell.Archive"
+# if (Test-Path $ArchModule){Copy-Item -ToSession $ns -Path $ArchModule -Destination $ArchModule -Recurse -Force}
 Enter-PSSession -Session $ns
+
+cat C:\aspnetv5web\approot\src\WebApplication9\project.json | findstr 'server.url'
 
 if (!(Get-NetFirewallRule | where {$_.Name -eq "TCP8080"})) {
     New-NetFirewallRule -Name "TCP8080" -DisplayName "HTTP on TCP/8080" -Protocol tcp -LocalPort 8080 -Action Allow -Enabled True
 }
 
 # •NetSh Advfirewall set allprofiles state off
+
+# 运行ASP.NET 5 WEB应用程序
+Start-Process  .\aspnetv5web\approot\web.cmd
+
+Exit-PSSession 
+
+$NanoURI = $NanoVMIP + ":8080"
+curl -Uri $NanoURI
 
 # 清除演示环境
 $NanoVM | Stop-VM -TurnOff -Force 
