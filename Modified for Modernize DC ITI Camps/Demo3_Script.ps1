@@ -49,3 +49,5 @@ docker stop $(docker ps -qa)
 docker rm $(docker ps -qa)
 
 docker rmi nginx_windows
+
+Exit-PSSession

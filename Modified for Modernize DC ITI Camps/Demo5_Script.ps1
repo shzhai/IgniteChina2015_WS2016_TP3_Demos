@@ -105,7 +105,7 @@ if (!(Get-NetFirewallRule | where {$_.Name -eq "TCP8080"})) {
 # •NetSh Advfirewall set allprofiles state off
 
 # 运行ASP.NET 5 WEB应用程序
-Start-Process  .\aspnetv5web\approot\web.cmd
+Start-Process  c:\aspnetv5web\approot\web.cmd
 
 Exit-PSSession 
 
